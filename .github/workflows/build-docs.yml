@@ -8,7 +8,7 @@ on:
 env:
   INSTANCE: 'Writerside/in'
   DOCKER_VERSION: 'XXX.YYYYY'
-  # IS_GROUP: 'true'  # Uncomment to build a group
+
 
 jobs:
   build:
