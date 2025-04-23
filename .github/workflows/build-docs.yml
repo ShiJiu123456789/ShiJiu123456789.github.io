@@ -69,7 +69,7 @@ jobs:
           retention-days: 7
   test:
     needs: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -86,7 +86,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     needs: [build, test]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -110,7 +110,7 @@ jobs:
         uses: actions/deploy-pages@v4
   publish-indexes:
     needs: [build, test, deploy]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container:
       image: registry.jetbrains.team/p/writerside/builder/algolia-publisher:2.0.32-3
     steps:
