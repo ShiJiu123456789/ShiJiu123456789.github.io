@@ -14,10 +14,10 @@ env:
   INSTANCE: 'Writerside/hi'
   DOCKER_VERSION: '243.22562'
   # IS_GROUP: 'true'  # Uncomment to build a group
-  ALGOLIA_APP_NAME: 'OP7KDHQT74'
-  ALGOLIA_INDEX_NAME: 'writerside'
-  CONFIG_JSON_PRODUCT: 'hi'
-  CONFIG_JSON_VERSION: '1.0'
+  # ALGOLIA_APP_NAME: 'OP7KDHQT74'
+  # ALGOLIA_INDEX_NAME: 'writerside'
+  # CONFIG_JSON_PRODUCT: 'hi'
+  # CONFIG_JSON_VERSION: '1.0'
 
 jobs:
   build:
