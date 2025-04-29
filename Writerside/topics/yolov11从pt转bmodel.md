@@ -2,7 +2,7 @@
 
 
 ## onnx准备工作 {#prepare_for_onnx}
-可选择从YOLOv8官方主页下载yolov8s.pt模型，或在导出onnx模型中自动下载模型。 安装如下依赖。
+可选择从YOLOv8官方主页下载yolov11s.pt模型，或在导出onnx模型中自动下载模型。 安装如下依赖。
 
     pip3 install ultralytics
     pip3 install ultralytics==8.3.12 #如果需要导出yolov11，需要新版本ultralytics，且需要python版本>=3.10。
