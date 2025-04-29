@@ -1,10 +1,41 @@
 # yolov11从pt转bmodel
 
-## pt模型转为onnx
+
+## onnx准备工作 {#prepare_for_onnx}
+可选择从YOLOv8官方主页下载yolov8s.pt模型，或在导出onnx模型中自动下载模型。 安装如下依赖。
+
+    pip3 install ultralytics
+    pip3 install ultralytics==8.3.12 #如果需要导出yolov11，需要新版本ultralytics，且需要python版本>=3.10。
+
+找到这个文件：~/.local/lib/python3.8/site-packages/ultralytics/nn/tasks.py。如果找不到，请通过pip3 show ultralytics查包的安装位置。 找到这个函数：
+    
+    def _predict_once(self, x, profile=False, visualize=False, embed=None):
+        ...
+        return x
+
+修改返回值，加一个transpose操作，这样更有利于cpu后处理连续取数。将return x修改为：
+    
+    return x.permute(0, 2, 1)
+    
+
+## pt模型转为onnx {#pt_convert_to_onnx}
+    from ultralytics import YOLO
+    model = YOLO('Yolov11/model/yolo11s.pt')
+    model.export(format='onnx', opset=17, dynamic=True)
+
+## 验证onnx模型是否正确
+查看onnx模型结构的地址：https://netron.app/
+
+算能模型yolov11模型
+![yolov11s_in_sophon.png](yolov11s_in_sophon.png)
+
+我们转的yolov11s模型
+<img src="yolov11s_our_convert.png" alt="yolov11s_our_convert" width="500" border-effect="line"/>
+
 
 ## onnx转为bmodel
 
-### 创建容器
+### 在linux上创建docker容器
 
 在对应项目目录（\{PWD}）下新建docker-compose.yml（ sophgo/tpuc_dev:v3.2镜像需要翻墙）
 
@@ -21,7 +52,7 @@
 
 docker-compose.yml所在目录下运行代码创建docker容器，容器名为ll_yolo11s
 
-    docker compose up -d
+    docker-compose up -d
 
 运行容器
 
@@ -46,7 +77,7 @@ onnx转为mlir
 
     model_transform.py \
             --model_name yolov11s \
-            --model_def ../models/road_signs.onnx \
+            --model_def ../models/yolo11s.onnx \
             --input_shapes [[1,3,640,640]] \
             --mean 0.0,0.0,0.0 \
             --scale 0.0039216,0.0039216,0.0039216 \
@@ -91,9 +122,30 @@ cd 到奇哥盒子里面的地址：/data/face_app
             - "2222:22"
         restart: always
 
+创建容器后，容器名称为ll_yolov11s，运行容器，再进入容器
 
+cd 到奇哥盒子里面的地址：/data/face_app/data/libs
 
-## bmodel模型在盒子上运行
+安装里面的两个文件sophon_arm-3.8.0-py3-none-any.whl和ThingsSDK-1.0.0-py3-none-any.whl
 
+    pip install sophon_arm-3.8.0-py3-none-any.whl
+    pip intsall ThingsSDK-1.0.0-py3-none-any.whl
 
- 
+## bmodel模型在盒子上创建的容器ll_yolov11s上运行
+因为yolov11和yolov8模型结构兼容，代码是相同的，直接下载yolov8的代码
+
+下载代码：https://github.com/sophgo/sophon-demo/tree/release/sample/YOLOv8_plus_det
+
+运行代码为：yolov8_bmcv.py
+![YOLOv8_puls_det.png](YOLOv8_puls_det.png)
+
+修改yolov8_bmcv.py
+    
+    if __name__ == "__main__":
+        args = argsparser()
+        #修改需要测试的图片所在的路径
+        args.input="/workspace/YOLOv11/YOLOv8_plus_det/datasets/test"
+        #修改bmodel模型所在的路径
+        args.bmodel= "/workspace/YOLOv11/YOLOv8_plus_det/models/BM1688/yolov11s_fp32_1b.bmodel"
+        main(args)
+        print('all done.')
