@@ -27,9 +27,7 @@
 查看onnx模型结构的地址：https://netron.app/
 
 算能模型yolov11模型
-
-[//]: # (![yolov11s_in_sophon.png]&#40;yolov11s_in_sophon.png&#41;)
-<img src="yolov11s_in_sophon.png" alt="yolov11s_in_sophon"  border-effect="line"/>
+![yolov11s_in_sophon.png](yolov11s_in_sophon.png)
 
 我们转的yolov11s模型
 <img src="yolov11s_our_convert.png" alt="yolov11s_our_convert"  border-effect="line"/>
