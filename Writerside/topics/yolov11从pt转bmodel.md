@@ -63,6 +63,10 @@ docker-compose.yml所在目录下运行代码创建docker容器，容器名为ll
 
     docker exec -it ll_yolov11s bash
 
+安装依赖TPU-MLIR
+
+    pip install tpu_mlir-1.11b0-py3-none-any.whl
+
 退出容器
 
     exit
