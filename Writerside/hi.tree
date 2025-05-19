@@ -8,6 +8,6 @@
 
     <toc-element topic="检测猪.md"/>
     <toc-element topic="yolov11从pt转bmodel.md"/>
-    <toc-element topic="人员聚集算法设计-deepseek.md"/>
+    <toc-element topic="独行人与人员聚集检测.md"/>
     <toc-element topic="Default-topic.md"/>
 </instance-profile>
