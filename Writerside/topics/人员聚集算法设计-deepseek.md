@@ -21,8 +21,243 @@ YOLOv8的效果比YOLOv11的效果好
 
 
 ## 独行处理
+    import numpy as np
+    from sklearn.cluster import DBSCAN
+    import cv2
+    
+    def fast_expand_boxes(boxes, img_size, a=0.5):
+        """ 安全扩展版，添加图像尺寸约束 """
+        wh = boxes[:, 2:] - boxes[:, :2]
+        delta = (wh * a / 2).astype(int)
+        
+        # 计算新坐标
+        new_boxes = np.hstack([boxes[:,:2]-delta, boxes[:,2:]+delta])
+        
+        # 应用边界约束
+        new_boxes[:, 0] = np.clip(new_boxes[:,0], 0, img_size[0])  # x1
+        new_boxes[:, 1] = np.clip(new_boxes[:,1], 0, img_size[1])  # y1
+        new_boxes[:, 2] = np.clip(new_boxes[:,2], 0, img_size[0])  # x2
+        new_boxes[:, 3] = np.clip(new_boxes[:,3], 0, img_size[1])  # y2
+        
+        return new_boxes.astype(np.int32)
+    
+    def calculate_iou(box1, box2):
+        """计算两个边界框的 IoU（Intersection over Union）"""
+        x1_min, y1_min, x1_max, y1_max = box1
+        x2_min, y2_min, x2_max, y2_max = box2
+    
+        # 计算交集区域
+        inter_x_min = max(x1_min, x2_min)
+        inter_y_min = max(y1_min, y2_min)
+        inter_x_max = min(x1_max, x2_max)
+        inter_y_max = min(y1_max, y2_max)
+    
+        inter_area = max(0, inter_x_max - inter_x_min) * max(0, inter_y_max - inter_y_min)
+    
+        # 计算并集区域
+        box1_area = (x1_max - x1_min) * (y1_max - y1_min)
+        box2_area = (x2_max - x2_min) * (y2_max - y2_min)
+        union_area = box1_area + box2_area - inter_area
+    
+    
+        return inter_area / union_area if union_area > 0 else 0
+    
+    
+    def find_single(boxes, original_img, a=0.5, iou_threshold=0.0):
+        """
+        严格判断独行人（与所有其他人IoU=0）
+        :param iou_threshold: 必须设置为0
+        """
+        img_size = original_img.shape[:2]  # (height, width)
+        img_size1 = (img_size[1],img_size[0])  # (width, height)
+        old_boxes = boxes
+        boxes = fast_expand_boxes(boxes, img_size1, a)
+    
+        n = len(boxes)
+        if n == 0:
+            return []
+    
+        # 显式检查每个框的独行状态
+        is_lone = [True] * n
+        for i in range(n):
+            for j in range(n):
+                if i != j and calculate_iou(boxes[i], boxes[j]) > 0.0:
+                    is_lone[i] = False
+                    break
+                
+    
+        # 直接生成标签（无需DBSCAN）
+        labels = []
+        cluster_id = 0
+        for i in range(n):
+            if is_lone[i]:
+                labels.append(-1)  # 独行人
+                # print(boxes[i])
+                # print(old_boxes[i])
+                # print(img_size)
+                # print("----------------------")
+            else:
+                # print(boxes[i])
+                # print(old_boxes[i])
+                # print(img_size)
+                # print("----------------------")
+                labels.append(cluster_id)
+                cluster_id += 1  # 每个有重叠的单独成簇
+        
+        return labels
+    
+    def draw_single(image, boxes, labels, output_img_dir):
+        """
+        在图像上只绘制独行人的检测框
+        
+        参数:
+            image: 原始图像 (numpy数组)
+            boxes: 检测框列表 [x1, y1, x2, y2]
+            labels: 对应每个检测框是否为独行人 (True/False列表)
+        
+        返回:
+            绘制后的图像 (numpy数组)
+        """
+        # 创建图像副本
+        plotted_img = image.copy()
+        
+        # 只绘制独行人的框
+        for box, label in zip(boxes, labels):
+            if label==-1:  # 如果是独行人
+                x1, y1, x2, y2 = map(int, box)
+                
+                # 绘制矩形框 (BGR颜色格式)
+                color = (0, 255, 0)  # 绿色框
+                thickness = 2
+                cv2.rectangle(plotted_img, (x1, y1), (x2, y2), color, thickness)
+                
+                # 添加标签文本
+                status = "Single"
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_scale = 0.6
+                text_thickness = 2
+                (text_width, text_height), _ = cv2.getTextSize(status, font, font_scale, text_thickness)
+                
+                # 文本背景
+                cv2.rectangle(plotted_img, (x1, y1 - text_height - 5), (x1 + text_width, y1), color, -1)
+                # 文本
+                cv2.putText(plotted_img, status, (x1, y1 - 5), font, font_scale, (0, 0, 0), text_thickness)
+        
+        cv2.imwrite(output_img_dir, plotted_img[:, :, ::-1])  # OpenCV使用BGR格式，需要转换
+        print(f"检测结果图片已保存到 {output_img_dir}")
+
+
 
 ## 聚集处理
-
+    import numpy as np
+    from sklearn.cluster import DBSCAN
+    
+    import cv2
+    
+    def find_clusters(boxes, original_img, a=0.7, iou_threshold=0.15, min_samples=2):
+        """
+        基于检测框的IoU进行密度聚类
+        :param boxes: 检测框数组 [N,4] (x1,y1,x2,y2)
+        :param iou_threshold: 判断是否相邻的IoU阈值
+        :param min_samples: 形成集群的最小人数
+        :return: 聚类标签数组，-1表示非聚集
+        """
+        img_size = original_img.shape[:2]
+        img_size1 = (img_size[1],img_size[0])  # (width, height)
+    
+        # 计算IoU矩阵
+        iou_matrix = calculate_iou_matrix(boxes,img_size1)
+        
+        # 转换为距离矩阵 (IoU越大距离越小)
+        distance_matrix = 1 - iou_matrix
+        
+        # 使用DBSCAN进行聚类
+        db = DBSCAN(eps=1-iou_threshold, min_samples=min_samples, metric='precomputed')
+        # db = DBSCAN(eps=1, min_samples=min_samples, metric='precomputed')
+        labels = db.fit_predict(distance_matrix)
+        
+        return labels
+    
+    def fast_expand_boxes(boxes, img_size, a=0.5):
+        """ 安全扩展版，添加图像尺寸约束 """
+        wh = boxes[:, 2:] - boxes[:, :2]
+        delta = (wh * a / 2).astype(int)
+        
+        # 计算新坐标
+        new_boxes = np.hstack([boxes[:,:2]-delta, boxes[:,2:]+delta])
+        
+        # 应用边界约束
+        new_boxes[:, 0] = np.clip(new_boxes[:,0], 0, img_size[0])  # x1
+        new_boxes[:, 1] = np.clip(new_boxes[:,1], 0, img_size[1])  # y1
+        new_boxes[:, 2] = np.clip(new_boxes[:,2], 0, img_size[0])  # x2
+        new_boxes[:, 3] = np.clip(new_boxes[:,3], 0, img_size[1])  # y2
+        
+        return new_boxes.astype(np.int32)
+    
+    def calculate_iou_matrix(boxes, img_size, a=0.5):
+        """
+        计算所有检测框之间的IoU
+        :param boxes: [N,4] 检测框数组
+        :return: [N,N] IoU矩阵
+        """
+        n = boxes.shape[0]
+        iou_matrix = np.zeros((n, n))
+    
+        boxes = fast_expand_boxes(boxes, img_size, a=0.5)
+        
+        # 计算每个检测框的面积
+        area = (boxes[:, 2] - boxes[:, 0]) * (boxes[:, 3] - boxes[:, 1])
+        
+        for i in range(n):
+            for j in range(i+1, n):
+                # 计算交集坐标
+                x1 = max(boxes[i, 0], boxes[j, 0])
+                y1 = max(boxes[i, 1], boxes[j, 1])
+                x2 = min(boxes[i, 2], boxes[j, 2])
+                y2 = min(boxes[i, 3], boxes[j, 3])
+                
+                # 计算交集面积
+                inter_area = max(0, x2 - x1) * max(0, y2 - y1)
+                
+                # 计算并集面积
+                union_area = area[i] + area[j] - inter_area
+                
+                # 计算IoU
+                iou_matrix[i, j] = inter_area / union_area if union_area > 0 else 0
+                iou_matrix[j, i] = iou_matrix[i, j]
+        
+        return iou_matrix
+    
+    
+    # 可视化聚集区域（修改draw_single函数）
+    def draw_clusters(image, boxes, labels, output_path):
+        """
+        绘制聚集区域可视化
+        :param labels: 聚类标签数组，-1表示非聚集
+        """
+        # 颜色配置
+        COLOR_SINGLE = (0, 255, 0)  # 绿色-独行人
+        COLOR_CLUSTER = [(255, 0, 0), (0, 0, 255), (255, 255, 0)]  # 不同集群颜色
+        
+        for i, box in enumerate(boxes):
+            # 确定颜色
+            if labels[i] == -1:
+                color = COLOR_SINGLE
+            else:
+                color = COLOR_CLUSTER[labels[i] % len(COLOR_CLUSTER)]
+            
+            # 绘制检测框
+            cv2.rectangle(image, 
+                         (int(box[0]), int(box[1])),
+                         (int(box[2]), int(box[3])),
+                         color, 2)
+            
+            # 添加标签文字
+            text = "Single" if labels[i] == -1 else f"Cluster {labels[i]}"
+            cv2.putText(image, text, 
+                       (int(box[0]), int(box[1])-10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        
+        cv2.imwrite(output_path, image)
 
 
