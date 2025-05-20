@@ -6,6 +6,7 @@
                  name="肆酒"
                  start-page="Default-topic.md">
 
+    <toc-element topic="楼道拥挤系统设计.md"/>
     <toc-element topic="检测猪.md"/>
     <toc-element topic="yolov11从pt转bmodel.md"/>
     <toc-element topic="独行人与人员聚集检测.md"/>
