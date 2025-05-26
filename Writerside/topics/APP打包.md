@@ -115,3 +115,5 @@ start.sh文件中的内容
 ## 遇到问题
 
     ERROR: Couldn't connect to Docker daemon at http+docker://localhost - is it running?
+
+**解决办法**
