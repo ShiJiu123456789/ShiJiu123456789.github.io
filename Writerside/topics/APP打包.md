@@ -18,6 +18,10 @@ utils存放算能盒子提供的底层的一些计算工具
 
 build_tools提供打包需要的文件
 
+首先cd到build_tools目录
+
+    cd 1688_comm/tools/build_tools
+
 打包app时运行
 
     sh app_docker_build.sh
@@ -92,6 +96,10 @@ app.dockerfile文件中的内容将某个服务中的镜像镜像融入到新镜
     
     CMD ["/bin/bash","/workspace/start.sh"]
 
+对于人员聚集的app，要多安装一个scikit-learn库
+
+    RUN pip3 install opencv-python-headless pyyaml requests websocket-client rel scikit-learn
+
 start.sh文件中的内容
 
     set -e
@@ -116,4 +124,8 @@ start.sh文件中的内容
 
     ERROR: Couldn't connect to Docker daemon at http+docker://localhost - is it running?
 
-**解决办法**
+**问题原因**
+
+磁盘空间不够
+
+
