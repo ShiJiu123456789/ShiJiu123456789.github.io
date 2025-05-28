@@ -1,7 +1,5 @@
 # Docker学习教程
 
-学习链接：https://codeduang.github.io/docker-docker%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4.html#docker_1
-
 ## Dockerfile
     #使用miniconda作为基础镜像
     FROM continuumio/miniconda3:4.11.0
@@ -51,6 +49,10 @@
 -v :本地目录和容器目录映射关系(一般用来把模型文件和图像数据等文件映射进去)
 
 bash :进入bash终端？？？
+
+
+## 学习链接：
+    https://codeduang.github.io/docker-docker常用命令.html
 
 
 
