@@ -118,6 +118,11 @@ start.sh文件中的内容
 
     docker run -it --rm --privileged 8edcac0e1ed1
 
+打包好后的包需要上传，上传代码
+
+    docker tag single_image:1.0.20250530 jks.iotdt.com:40443/warehouse/app-02-bm1688-single_detect:1.0.20250530
+    docker push jks.iotdt.com:40443/warehouse/app-02-bm1688-single_detect:1.0.20250530
+
 欢迎收看！
 
 ## 遇到问题
