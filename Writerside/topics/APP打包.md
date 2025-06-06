@@ -2,6 +2,8 @@
 
 ![code_of_pack_up_app.png](code_of_pack_up_app.png)
 
+打包要在盒子上进行，而非容器！！！
+
 ### framework中
 
 app存放所有业务相关的代码. 
