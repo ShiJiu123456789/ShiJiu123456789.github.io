@@ -13,6 +13,26 @@ mods存放模型bmodel文件
 
 utils存放算能盒子提供的底层的一些计算工具
 
+修改app.yml的内容，其中alarm设定为具体的报警信息，也可添加需要的参数。
+
+    log:
+      debug: false
+    config:
+      #desc:算法输出数据点位列表,type:checkbox,model:checkbox,editable:no,isnull:no
+      alarm:
+        - single
+    output:
+      #desc:数据点位服务,type:data_point,model:multiply,editable:yes,isnull:no
+      data_point:
+    input:
+      #desc:摄像头与节点映射ID列表,type:list,model:multiply,editable:no,isnull:no
+      video:
+        - camera_name: camera01
+          src_addr: rtsp://uuuuu:admin*123@192.168.59.230:554/video1
+          src_type: RTSP
+          skip: 15
+
+
 
 ### tools中
 
@@ -35,7 +55,7 @@ app_docker_build.sh文件中的内容为
     docker-compose -f tools/build_tools/docker_compose.yml build
     echo app镜像 编译完成
 
-docker_compose.yml文件中的内容为
+docker_compose.yml文件中的内容为，可自己设置镜像名称
 
     version: '3' #版本号
     services:
