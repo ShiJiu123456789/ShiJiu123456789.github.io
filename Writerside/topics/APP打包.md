@@ -13,7 +13,7 @@ mods存放模型bmodel文件
 
 utils存放算能盒子提供的底层的一些计算工具
 
-修改app.yml的内容，其中alarm设定为具体的报警信息，也可添加需要事先引入的参数。
+修改app.yml的内容，其中alarm设定为具体的报警信息，也可添加需要先引入的参数。
 
     log:
       debug: false
