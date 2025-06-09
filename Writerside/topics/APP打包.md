@@ -153,6 +153,15 @@ start.sh文件中的内容
 
 **问题原因**
 
-磁盘空间不够
+1.磁盘空间不够，检查磁盘空间
+
+    df -h
+
+2.在app_docker_build.sh命名出现了大写，不能有大写字符
+
+    version: '3'
+    services:
+      app-02-bm1688-areaInvasion_detect:
+        image: app-02-bm1688-areaInvasion_detect:1.0.20250606
 
 
